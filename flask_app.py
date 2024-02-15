@@ -1,23 +1,33 @@
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import text
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:jose1984br@localhost:3306/youtube'
 db = SQLAlchemy(app)
 
+
+
 class Usuario(db.Model):
     
     id = db.Column(db.Integer,primary_key=True, autoincrement = True)
     nome = db.Column(db.String(50))
     email = db.Column(db.String(100))
-
     def to_json(self):
         return {'id': self.id, 'nome': self.nome, 'email': self.email}
     
 
 with app.app_context():
     db.metadata.create_all(checkfirst=True, bind=db.engine)
+
+
+@app.route('/tabelasnovas', methods =['GET'])
+def procurar():
+    registros = db.session.execute(text("select * from nova_tabela")).fetchall()
+    registros_json = [{"id": x.id, "habilidade": x.habilidade} for x in registros]
+    return jsonify(registros_json), 200   
+
 
 @app.route('/usuarios', methods=["GET"])
 def seleciona_usuario():
@@ -74,5 +84,6 @@ def deleta_usuario(id):
         print('Erro', e)
         return jsonify(message="Usuário não apagado erro")
     
+
 app.run()
 
